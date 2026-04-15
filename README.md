@@ -107,30 +107,4 @@ Customer-Churn-Project/
 │
 └── README.md
 
-tools and Technologies
-Python
-Pandas
-NumPy
-Matplotlib
-Seaborn
-Scikit-learn
-Power BI
-Jupyter Notebook
-
-Key Insights
-Customers with month-to-month contracts are more likely to churn
-Customers with higher monthly charges have a greater churn probability
-Longer-tenure customers are less likely to leave
-Customers using electronic check payments show higher churn rates
-
-Future Improvements
-Experiment with additional machine learning models
-Improve feature engineering techniques
-Deploy the model using Streamlit or Flask
-Add customer segmentation and retention strategies
-
-
-
-Author
-Rawda Hesham
 
