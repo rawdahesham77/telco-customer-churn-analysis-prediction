@@ -133,4 +133,7 @@ Add customer segmentation and retention strategies
 
 Author
 Rawda Hesham
-<img width="1188" height="658" alt="schreenshot churn dashboard overview" src="https://github.com/user-attachments/assets/46f6a082-2a99-46c3-97a8-735f131d12ea" />
+<img width="1188" height="658" alt="schreenshot churn dashboard overview" src="https://github.com/user-attachments/assets/a77bc875-b523-4c5d-917b-7cc020f02833" />
+<img width="1185" height="660" alt="revenue dashboard" src="https://github.com/user-attachments/assets/f019d73f-ba45-40a6-a3eb-d3b3e4918141" />
+<img width="1177" height="665" alt="customer " src="https://github.com/user-attachments/assets/c888f6ec-8477-4867-ab48-d87dd2d96aee" />
+
