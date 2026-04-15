@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Insights — Customer Churn Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #F0F4FA;
+    color: #1E2B45;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: #1A2E5A;
+    padding: 28px 40px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .header-left { }
+  .header-tag {
+    font-size: 11px;
+    background: #2E6FC4;
+    color: #fff;
+    padding: 3px 12px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 8px;
+    letter-spacing: .04em;
+  }
+  .header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+  }
+  .header-sub {
+    font-size: 13px;
+    color: #9BB5D8;
+    margin-top: 5px;
+  }
+  .header-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .hstat {
+    background: #243C75;
+    border: 0.5px solid #3A5599;
+    border-radius: 10px;
+    padding: 10px 18px;
+    text-align: center;
+    min-width: 90px;
+  }
+  .hstat-val { font-size: 20px; font-weight: 700; color: #fff; }
+  .hstat-lbl { font-size: 10px; color: #7A9CC4; margin-top: 2px; }
+
+  /* ── MAIN ── */
+  .main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 60px; }
+
+  /* ── SECTION LABEL ── */
+  .sec-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6B7A99;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin: 32px 0 14px;
+  }
+
+  /* ── KPI ROW ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .kpi-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    border: 0.5px solid #DDE4F0;
+  }
+  .kpi-top {
+    height: 4px;
+    border-radius: 2px;
+    margin-bottom: 12px;
+  }
+  .kpi-val {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .kpi-lbl { font-size: 12px; color: #6B7A99; }
+  .kpi-sub { font-size: 11px; margin-top: 6px; }
+
+  /* ── INSIGHT CARDS ── */
+  .insight-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 14px;
+  }
+  .insight-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 0.5px solid #DDE4F0;
+    overflow: hidden;
+  }
+  .insight-top {
+    display: flex;
+    align-items: stretch;
+  }
+  .insight-accent {
+    width: 5px;
+    flex-shrink: 0;
+  }
+  .insight-stat-box {
+    padding: 18px 16px;
+    min-width: 88px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-left: 0.5px solid #EEF2FA;
+  }
+  .insight-stat-val { font-size: 24px; font-weight: 700; line-height: 1.1; }
+  .insight-stat-lbl { font-size: 10px; color: #6B7A99; margin-top: 3px; text-align: center; }
+  .insight-body { padding: 18px 16px; flex: 1; }
+  .insight-num {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    margin-bottom: 4px;
+  }
+  .insight-title { font-size: 14px; font-weight: 600; color: #1E2B45; margin-bottom: 8px; line-height: 1.3; }
+  .insight-desc { font-size: 12px; color: #5A6B82; line-height: 1.65; }
+
+  .insight-footer {
+    border-top: 0.5px solid #EEF2FA;
+    padding: 10px 16px;
+    font-size: 11px;
+    color: #6B7A99;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .action-pill {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-right: 6px;
+  }
+
+  /* ── CHART SECTION ── */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .chart-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 0.5px solid #DDE4F0;
+    padding: 20px;
+  }
+  .chart-title { font-size: 13px; font-weight: 600; color: #1E2B45; margin-bottom: 4px; }
+  .chart-sub { font-size: 11px; color: #6B7A99; margin-bottom: 16px; }
+  .chart-wrap { position: relative; width: 100%; }
+
+  /* ── FEATURE IMPORTANCE ── */
+  .feat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .feat-name { font-size: 12px; color: #5A6B82; min-width: 110px; text-align: right; }
+  .feat-track { flex: 1; height: 10px; background: #EEF2FA; border-radius: 5px; overflow: hidden; }
+  .feat-fill { height: 100%; border-radius: 5px; }
+  .feat-pct { font-size: 11px; color: #5A6B82; min-width: 34px; }
+
+  /* ── RECOMMENDATIONS ── */
+  .rec-list { display: flex; flex-direction: column; gap: 10px; }
+  .rec-item {
+    background: #fff;
+    border-radius: 10px;
+    border: 0.5px solid #DDE4F0;
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+  }
+  .rec-side {
+    width: 6px;
+    flex-shrink: 0;
+  }
+  .rec-inner { display: flex; align-items: center; padding: 14px 16px; gap: 14px; flex: 1; flex-wrap: wrap; }
+  .rec-badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    letter-spacing: .05em;
+  }
+  .rec-text { flex: 1; min-width: 180px; }
+  .rec-title { font-size: 13px; font-weight: 600; color: #1E2B45; margin-bottom: 3px; }
+  .rec-desc { font-size: 11px; color: #5A6B82; }
+  .rec-impact {
+    background: #F0F4FA;
+    border-radius: 8px;
+    padding: 8px 14px;
+    min-width: 160px;
+    font-size: 11px;
+  }
+  .rec-impact-lbl { color: #2E6FC4; font-weight: 600; margin-bottom: 2px; }
+  .rec-impact-val { color: #5A6B82; }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: #1A2E5A;
+    color: #7A9CC4;
+    text-align: center;
+    font-size: 11px;
+    padding: 16px;
+    margin-top: 40px;
+  }
+  .footer a { color: #9BB5D8; }
+
+  @media (max-width: 680px) {
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+    .insight-grid { grid-template-columns: 1fr; }
+    .chart-grid { grid-template-columns: 1fr; }
+    .header { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-tag">AI Insights Report</div>
+    <h1>Customer Churn Analysis</h1>
+    <div class="header-sub">Telco Dataset · Rawda Hesham Elsayed Nada · Gradient Boosting Model</div>
+  </div>
+  <div class="header-stats">
+    <div class="hstat"><div class="hstat-val">7,043</div><div class="hstat-lbl">Customers</div></div>
+    <div class="hstat"><div class="hstat-val">26.5%</div><div class="hstat-lbl">Churn Rate</div></div>
+    <div class="hstat"><div class="hstat-val">80.4%</div><div class="hstat-lbl">AI Accuracy</div></div>
+    <div class="hstat"><div class="hstat-val">0.843</div><div class="hstat-lbl">AUC-ROC</div></div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- KPIs -->
+  <div class="sec-label">Key Performance Indicators</div>
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-top" style="background:#2E6FC4;"></div>
+      <div class="kpi-val" style="color:#2E6FC4;">7,043</div>
+      <div class="kpi-lbl">Total Customers</div>
+      <div class="kpi-sub" style="color:#6B7A99;">Full telco dataset</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top" style="background:#D94040;"></div>
+      <div class="kpi-val" style="color:#D94040;">1,869</div>
+      <div class="kpi-lbl">Churned Customers</div>
+      <div class="kpi-sub" style="color:#D94040;">↑ 26.5% churn rate</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top" style="background:#0D8A65;"></div>
+      <div class="kpi-val" style="color:#0D8A65;">5,174</div>
+      <div class="kpi-lbl">Retained Customers</div>
+      <div class="kpi-sub" style="color:#0D8A65;">73.5% retention rate</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top" style="background:#C47A0A;"></div>
+      <div class="kpi-val" style="color:#C47A0A;">$139K</div>
+      <div class="kpi-lbl">Revenue Lost / Month</div>
+      <div class="kpi-sub" style="color:#C47A0A;">From churned customers</div>
+    </div>
+  </div>
+
+  <!-- AI Insights -->
+  <div class="sec-label">AI Insights — Key Discoveries</div>
+  <div class="insight-grid">
+
+    <div class="insight-card">
+      <div class="insight-top">
+        <div class="insight-accent" style="background:#D94040;"></div>
+        <div class="insight-stat-box">
+          <div class="insight-stat-val" style="color:#D94040;">15×</div>
+          <div class="insight-stat-lbl">Risk difference</div>
+        </div>
+        <div class="insight-body">
+          <div class="insight-num" style="color:#D94040;">INSIGHT 01</div>
+          <div class="insight-title">Contract type is the #1 churn driver</div>
+          <div class="insight-desc">Month-to-month customers churn at 42.7% vs only 2.8% for two-year contracts — a 15× difference. This is the single strongest predictor the AI model identified.</div>
+        </div>
+      </div>
+      <div class="insight-footer">
+        <span class="action-pill" style="background:#FCEBEB;color:#A32D2D;">HIGH PRIORITY</span>
+        Offer contract upgrade incentives within first 6 months
+      </div>
+    </div>
+
+    <div class="insight-card">
+      <div class="insight-top">
+        <div class="insight-accent" style="background:#C47A0A;"></div>
+        <div class="insight-stat-box">
+          <div class="insight-stat-val" style="color:#C47A0A;">&lt;12mo</div>
+          <div class="insight-stat-lbl">High-risk window</div>
+        </div>
+        <div class="insight-body">
+          <div class="insight-num" style="color:#C47A0A;">INSIGHT 02</div>
+          <div class="insight-title">First year is the most critical period</div>
+          <div class="insight-desc">Customers in their first 12 months show the highest churn probability. The model flags new customers (tenure &lt; 6 months) as the top risk segment requiring immediate attention.</div>
+        </div>
+      </div>
+      <div class="insight-footer">
+        <span class="action-pill" style="background:#FFF3DC;color:#7A4A00;">HIGH PRIORITY</span>
+        Automated onboarding + early engagement program
+      </div>
+    </div>
+
+    <div class="insight-card">
+      <div class="insight-top">
+        <div class="insight-accent" style="background:#2E6FC4;"></div>
+        <div class="insight-stat-box">
+          <div class="insight-stat-val" style="color:#2E6FC4;">41.9%</div>
+          <div class="insight-stat-lbl">Fiber churn rate</div>
+        </div>
+        <div class="insight-body">
+          <div class="insight-num" style="color:#2E6FC4;">INSIGHT 03</div>
+          <div class="insight-title">Fiber Optic users: highest pay, highest churn</div>
+          <div class="insight-desc">Fiber customers pay the most ($91/mo avg) yet churn at 41.9% — vs 7.4% for no-internet customers. The AI flags a clear value-perception gap in this premium segment.</div>
+        </div>
+      </div>
+      <div class="insight-footer">
+        <span class="action-pill" style="background:#E6F1FB;color:#0C447C;">MEDIUM</span>
+        Quality audit + pricing review for Fiber Optic service
+      </div>
+    </div>
+
+    <div class="insight-card">
+      <div class="insight-top">
+        <div class="insight-accent" style="background:#0D8A65;"></div>
+        <div class="insight-stat-box">
+          <div class="insight-stat-val" style="color:#0D8A65;">423</div>
+          <div class="insight-stat-lbl">High-risk flagged</div>
+        </div>
+        <div class="insight-body">
+          <div class="insight-num" style="color:#0D8A65;">INSIGHT 04</div>
+          <div class="insight-title">423 customers need immediate action</div>
+          <div class="insight-desc">The model identified 423 customers with &gt;60% churn probability. Targeting this group with retention offers could save ~$39K in monthly recurring revenue before they churn.</div>
+        </div>
+      </div>
+      <div class="insight-footer">
+        <span class="action-pill" style="background:#E1F5EE;color:#085041;">ACTION NOW</span>
+        Use Power BI High Risk table to contact these customers
+      </div>
+    </div>
+
+    <div class="insight-card">
+      <div class="insight-top">
+        <div class="insight-accent" style="background:#6A5FC1;"></div>
+        <div class="insight-stat-box">
+          <div class="insight-stat-val" style="color:#6A5FC1;">$74.4</div>
+          <div class="insight-stat-lbl">Avg churned charge</div>
+        </div>
+        <div class="insight-body">
+          <div class="insight-num" style="color:#6A5FC1;">INSIGHT 05</div>
+          <div class="insight-title">Churned customers pay MORE than retained</div>
+          <div class="insight-desc">Churned customers pay $74.4/mo on average vs $61.3 for retained. Higher charges correlate with higher churn — suggesting price sensitivity, not satisfaction, drives departure.</div>
+        </div>
+      </div>
+      <div class="insight-footer">
+        <span class="action-pill" style="background:#EEEDFE;color:#3C3489;">MEDIUM</span>
+        Review pricing tiers — offer loyalty discounts for high spenders
+      </div>
+    </div>
+
+    <div class="insight-card">
+      <div class="insight-top">
+        <div class="insight-accent" style="background:#D85A30;"></div>
+        <div class="insight-stat-box">
+          <div class="insight-stat-val" style="color:#D85A30;">45%</div>
+          <div class="insight-stat-lbl">E-check churn</div>
+        </div>
+        <div class="insight-body">
+          <div class="insight-num" style="color:#D85A30;">INSIGHT 06</div>
+          <div class="insight-title">Electronic check = highest churn payment method</div>
+          <div class="insight-desc">Electronic check users churn at ~45% — the highest of all payment methods. Bank transfer (auto) users churn at &lt;17%. Auto-pay is a strong retention signal the model confirmed.</div>
+        </div>
+      </div>
+      <div class="insight-footer">
+        <span class="action-pill" style="background:#FAECE7;color:#712B13;">MEDIUM</span>
+        Incentivize auto-pay switch with monthly credit
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Charts -->
+  <div class="sec-label">Data Visualizations</div>
+  <div class="chart-grid">
+
+    <div class="chart-card">
+      <div class="chart-title">Churn rate by contract type</div>
+      <div class="chart-sub">Month-to-month customers are at highest risk</div>
+      <div class="chart-wrap" style="height:200px;">
+        <canvas id="contractChart" role="img" aria-label="Bar chart showing churn rate by contract: Month-to-month 42.7%, One year 11.3%, Two year 2.8%">Month-to-month: 42.7%, One year: 11.3%, Two year: 2.8%</canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Churn vs retained distribution</div>
+      <div class="chart-sub">26.5% of customers churned</div>
+      <div class="chart-wrap" style="height:200px;">
+        <canvas id="donutChart" role="img" aria-label="Donut chart: 1869 churned (26.5%) vs 5174 retained (73.5%)">Churned: 1869, Retained: 5174</canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Churn rate by internet service</div>
+      <div class="chart-sub">Fiber Optic has the highest churn rate</div>
+      <div class="chart-wrap" style="height:200px;">
+        <canvas id="internetChart" role="img" aria-label="Bar chart: Fiber optic 41.9%, DSL 19%, No internet 7.4%">Fiber: 41.9%, DSL: 19%, No internet: 7.4%</canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">AI model comparison</div>
+      <div class="chart-sub">Gradient Boosting selected as best model</div>
+      <div class="chart-wrap" style="height:200px;">
+        <canvas id="modelChart" role="img" aria-label="Grouped bar chart: Logistic Regression 74.2%, Random Forest 78.9%, Gradient Boosting 80.4% accuracy">LR: 74.2%, RF: 78.9%, GB: 80.4%</canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Feature Importance -->
+  <div class="sec-label">Top Feature Importances — AI Model</div>
+  <div style="background:#fff;border-radius:12px;border:0.5px solid #DDE4F0;padding:22px 24px;">
+    <div style="font-size:13px;color:#5A6B82;margin-bottom:18px;">The model ranked these features as most predictive of customer churn:</div>
+    <div class="feat-row">
+      <div class="feat-name">TotalCharges</div>
+      <div class="feat-track"><div class="feat-fill" style="width:100%;background:#2E6FC4;"></div></div>
+      <div class="feat-pct">13.1%</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-name">AvgCharges</div>
+      <div class="feat-track"><div class="feat-fill" style="width:94%;background:#2E6FC4;"></div></div>
+      <div class="feat-pct">12.4%</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-name">MonthlyCharges</div>
+      <div class="feat-track"><div class="feat-fill" style="width:93%;background:#2E6FC4;"></div></div>
+      <div class="feat-pct">12.2%</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-name">Tenure</div>
+      <div class="feat-track"><div class="feat-fill" style="width:91%;background:#6A5FC1;"></div></div>
+      <div class="feat-pct">12.0%</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-name">Contract</div>
+      <div class="feat-track"><div class="feat-fill" style="width:79%;background:#6A5FC1;"></div></div>
+      <div class="feat-pct">10.4%</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-name">OnlineSecurity</div>
+      <div class="feat-track"><div class="feat-fill" style="width:43%;background:#0D8A65;"></div></div>
+      <div class="feat-pct">5.6%</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-name">PaymentMethod</div>
+      <div class="feat-track"><div class="feat-fill" style="width:33%;background:#0D8A65;"></div></div>
+      <div class="feat-pct">4.3%</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-name">TechSupport</div>
+      <div class="feat-track"><div class="feat-fill" style="width:33%;background:#0D8A65;"></div></div>
+      <div class="feat-pct">4.3%</div>
+    </div>
+  </div>
+
+  <!-- Recommendations -->
+  <div class="sec-label">Recommendations — Action Plan</div>
+  <div class="rec-list">
+    <div class="rec-item">
+      <div class="rec-side" style="background:#D94040;"></div>
+      <div class="rec-inner">
+        <div class="rec-badge" style="background:#FCEBEB;color:#A32D2D;">HIGH</div>
+        <div class="rec-text">
+          <div class="rec-title">Target month-to-month contract customers</div>
+          <div class="rec-desc">Offer 20–30% discount to switch to annual contracts within first 6 months of subscription.</div>
+        </div>
+        <div class="rec-impact">
+          <div class="rec-impact-lbl">Expected Impact</div>
+          <div class="rec-impact-val">Reduce churn by up to 15%</div>
+        </div>
+      </div>
+    </div>
+    <div class="rec-item">
+      <div class="rec-side" style="background:#D94040;"></div>
+      <div class="rec-inner">
+        <div class="rec-badge" style="background:#FCEBEB;color:#A32D2D;">HIGH</div>
+        <div class="rec-text">
+          <div class="rec-title">Early intervention for new customers</div>
+          <div class="rec-desc">Automated onboarding program for customers with tenure &lt; 3 months — personalized support and check-ins.</div>
+        </div>
+        <div class="rec-impact">
+          <div class="rec-impact-lbl">Expected Impact</div>
+          <div class="rec-impact-val">Reduce 1st-year churn risk</div>
+        </div>
+      </div>
+    </div>
+    <div class="rec-item">
+      <div class="rec-side" style="background:#C47A0A;"></div>
+      <div class="rec-inner">
+        <div class="rec-badge" style="background:#FFF3DC;color:#7A4A00;">MEDIUM</div>
+        <div class="rec-text">
+          <div class="rec-title">Investigate Fiber Optic quality issues</div>
+          <div class="rec-desc">Survey Fiber users about service quality. Consider SLA improvements or price adjustment for premium tier.</div>
+        </div>
+        <div class="rec-impact">
+          <div class="rec-impact-lbl">Expected Impact</div>
+          <div class="rec-impact-val">Recover 41.9% churn segment</div>
+        </div>
+      </div>
+    </div>
+    <div class="rec-item">
+      <div class="rec-side" style="background:#C47A0A;"></div>
+      <div class="rec-inner">
+        <div class="rec-badge" style="background:#FFF3DC;color:#7A4A00;">MEDIUM</div>
+        <div class="rec-text">
+          <div class="rec-title">Replace Electronic Check with auto-pay</div>
+          <div class="rec-desc">Incentivize bank transfer or credit card auto-pay with small monthly credit — reduces highest-churn payment method.</div>
+        </div>
+        <div class="rec-impact">
+          <div class="rec-impact-lbl">Expected Impact</div>
+          <div class="rec-impact-val">Cut payment-related churn</div>
+        </div>
+      </div>
+    </div>
+    <div class="rec-item">
+      <div class="rec-side" style="background:#2E6FC4;"></div>
+      <div class="rec-inner">
+        <div class="rec-badge" style="background:#E6F1FB;color:#0C447C;">LOW</div>
+        <div class="rec-text">
+          <div class="rec-title">Senior citizen loyalty program</div>
+          <div class="rec-desc">Dedicated support line and simplified plans for senior customers — captures underserved but high-value segment.</div>
+        </div>
+        <div class="rec-impact">
+          <div class="rec-impact-lbl">Expected Impact</div>
+          <div class="rec-impact-val">Improve senior retention</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Customer Churn Prediction · Rawda Hesham Elsayed Nada ·
+  <a href="https://drive.google.com/file/d/17VbXZPUjx3Xzho_fVNbszbf0wmALx05v/view" target="_blank">Dataset Link</a>
+  · Gradient Boosting Model · Accuracy 80.4%
+</div>
+
+<script>
+Chart.defaults.font.family = "'Segoe UI', Arial, sans-serif";
+Chart.defaults.font.size = 12;
+
+new Chart(document.getElementById('contractChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Month-to-month', 'One year', 'Two year'],
+    datasets: [{
+      data: [42.7, 11.3, 2.8],
+      backgroundColor: ['#D94040', '#C47A0A', '#0D8A65'],
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { ticks: { callback: v => v + '%', color: '#6B7A99' }, grid: { color: 'rgba(0,0,0,0.05)' }, max: 55 },
+      x: { ticks: { color: '#6B7A99' }, grid: { display: false } }
+    }
+  }
+});
+
+new Chart(document.getElementById('donutChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Churned', 'Retained'],
+    datasets: [{ data: [1869, 5174], backgroundColor: ['#D94040', '#0D8A65'], hoverOffset: 4, borderWidth: 0 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '65%',
+    plugins: {
+      legend: { position: 'bottom', labels: { color: '#5A6B82', padding: 16, boxWidth: 12 } }
+    }
+  }
+});
+
+new Chart(document.getElementById('internetChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Fiber Optic', 'DSL', 'No Internet'],
+    datasets: [{
+      data: [41.9, 19.0, 7.4],
+      backgroundColor: ['#D94040', '#C47A0A', '#0D8A65'],
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { ticks: { callback: v => v + '%', color: '#6B7A99' }, grid: { color: 'rgba(0,0,0,0.05)' }, max: 55 },
+      x: { ticks: { color: '#6B7A99' }, grid: { display: false } }
+    }
+  }
+});
+
+new Chart(document.getElementById('modelChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Logistic\nRegression', 'Random\nForest', 'Gradient\nBoosting'],
+    datasets: [
+      { label: 'Accuracy %', data: [74.2, 78.9, 80.4], backgroundColor: ['#B5D4F4', '#B5D4F4', '#2E6FC4'], borderRadius: 6 },
+      { label: 'AUC × 100', data: [84.5, 81.8, 84.3], backgroundColor: ['#9FE1CB', '#9FE1CB', '#0D8A65'], borderRadius: 6 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { color: '#5A6B82', padding: 12, boxWidth: 10 } }
+    },
+    scales: {
+      y: { ticks: { color: '#6B7A99' }, grid: { color: 'rgba(0,0,0,0.05)' }, min: 60, max: 92 },
+      x: { ticks: { color: '#6B7A99' }, grid: { display: false } }
+    }
+  }
+});
+</script>
+</body>
+</html>
